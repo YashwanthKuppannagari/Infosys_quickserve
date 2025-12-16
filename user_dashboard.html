@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
+    <script src="chat_script.js" defer></script>
+    <script src="wallet_script.js" defer></script> <script src="user_dashboard_script.js" defer></script>
+</head>
+<body>
+
+<div class="d-flex-wrapper" id="wrapper">
+
+    <div id="sidebar-wrapper">
+        <div class="sidebar-profile">
+            <div class="profile-pic-circle">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <h5 id="sidebarUserName" class="mb-0">User Name</h5>
+            <small id="sidebarUserRole" style="opacity: 0.7;">Customer</small>
+            
+            <div class="mt-3 p-2 rounded" style="background: rgba(0,0,0,0.2);">
+                <small class="text-white-50">Wallet Balance</small><br>
+                <strong class="wallet-balance-display fs-5 text-white">Loading...</strong>
+            </div>
+            </div>
+        
+        <div class="list-group list-group-flush my-3">
+            <a href="#" class="list-group-item list-group-item-action active" onclick="switchView('homeSection', this)">
+                <i class="fa-solid fa-magnifying-glass me-2"></i> Find Service
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('bookingsSection', this)">
+                <i class="fa-solid fa-calendar-check me-2"></i> My Bookings
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('profileSection', this)">
+                <i class="fa-solid fa-id-card me-2"></i> My Profile
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('helpSection', this)">
+                <i class="fa-solid fa-circle-question me-2"></i> Help
+            </a>
+            
+            <a href="index.html" class="list-group-item list-group-item-action mt-5">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Log Out
+            </a>
+        </div>
+    </div>
+
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-light bg-transparent d-md-none mb-3">
+            <button class="btn btn-primary" id="menu-toggle">☰ Menu</button>
+        </nav>
+
+        <div class="container-fluid">
+            
+            <h2 id="welcomeMessage" class="mb-4 text-primary fw-bold">Welcome!</h2>
+
+            <div id="homeSection" class="content-section active-section">
+                <div class="widget">
+                    <h3 class="border-bottom pb-2 mb-3">📍 Book a Service</h3>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Service:</label>
+                            <select id="serviceSelect" onchange="checkSearchCriteria()" class="form-select">
+                                <option value="">-- Select Service --</option>
+                                </select>
+                            <p id="servicePriceDisplay" class="h5 text-success mt-2"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location:</label>
+                            <select id="locationSelect" onchange="checkSearchCriteria()" class="form-select">
+                                <option value="">-- Select Location --</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Kolkata">Kolkata</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="addressContainer" style="display: none; margin-bottom: 20px;">
+                        <label class="form-label">Your Full Address:</label>
+                        <textarea id="customerAddress" rows="2" class="form-control" placeholder="#123, Street Name, City..."></textarea>
+                        
+                        <div class="mt-3">
+                            <label class="form-label">Pin your exact location (Optional):</label>
+                            <div id="map" style="height: 250px; width: 100%; border-radius: 5px; border: 1px solid #ccc;"></div>
+                            <small class="text-muted">Drag the blue pin to your exact house location.</small>
+                        </div>
+                    </div>
+                    
+                    <div id="dateTimeContainer" class="p-3 bg-light border rounded" style="display: none;">
+                        <h4 class="h6 text-muted">When do you need it?</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Date:</label>
+                                <input type="date" id="serviceDate" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Time:</label>
+                                <input type="time" id="serviceTime" class="form-control">
+                            </div>
+                        </div>
+                        <button type="button" id="searchProvidersButton" class="btn btn-primary w-100 mt-3">Search Available Providers</button>
+                    </div>
+                </div>
+
+                <div id="searchResults" class="widget mt-4" style="display: none;"> 
+                     <h3 class="text-success">Available Providers</h3>
+                     <p id="searchMessage" class="fst-italic"></p> 
+                     <ul id="providerList" class="list-group"></ul>
+                </div>
+            </div>
+
+            <div id="bookingsSection" class="content-section">
+                <div class="widget">
+                    <h3 class="border-bottom pb-2 mb-3">📅 Booking History</h3>
+                    <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-4">
+                        
+                        <div class="col">
+                            <div class="card border-warning h-100">
+                                <div class="card-header bg-warning text-dark bg-opacity-25 fw-bold">Pending</div>
+                                <div class="card-body p-2">
+                                    <ul id="pendingBookingsList" class="list-group list-group-flush mb-2"></ul>
+                                    <p id="noPendingMsg" class="small text-muted text-center">No pending requests.</p>
+                                    <button id="viewMorePending" class="view-more-btn btn-sm">View More</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white bg-opacity-75 fw-bold">Active</div>
+                                <div class="card-body p-2">
+                                    <ul id="activeBookingsList" class="list-group list-group-flush mb-2"></ul>
+                                    <p id="noActiveMsg" class="small text-muted text-center">No active bookings.</p>
+                                    <button id="viewMoreActive" class="view-more-btn btn-sm">View More</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="card border-secondary h-100">
+                                <div class="card-header bg-secondary text-white bg-opacity-75 fw-bold">Completed</div>
+                                <div class="card-body p-2">
+                                    <ul id="completedBookingsList" class="list-group list-group-flush mb-2"></ul>
+                                    <p id="noCompletedMsg" class="small text-muted text-center">No completed bookings.</p>
+                                    <button id="viewMoreCompleted" class="view-more-btn btn-sm">View More</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="card border-danger h-100">
+                                <div class="card-header bg-danger text-white bg-opacity-75 fw-bold">Declined</div>
+                                <div class="card-body p-2">
+                                    <ul id="declinedBookingsList" class="list-group list-group-flush mb-2"></ul>
+                                    <p id="noDeclinedMsg" class="small text-muted text-center">No declined bookings.</p>
+                                    <button id="viewMoreDeclined" class="view-more-btn btn-sm">View More</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="profileSection" class="content-section">
+                
+                <div class="row mb-4 g-3">
+                    <div class="col-md-4"><div class="card text-center border-0 shadow-sm bg-light py-3"><h3 class="text-primary fw-bold" id="statTotal">0</h3><small class="text-muted">Total Bookings</small></div></div>
+                    <div class="col-md-4"><div class="card text-center border-0 shadow-sm bg-light py-3"><h3 class="text-success fw-bold" id="statActive">0</h3><small class="text-muted">Active / Ongoing</small></div></div>
+                    <div class="col-md-4"><div class="card text-center border-0 shadow-sm bg-light py-3"><h3 class="text-secondary fw-bold" id="statCompleted">0</h3><small class="text-muted">Completed</small></div></div>
+                </div>
+
+                <div class="widget">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3>👤 My Profile</h3>
+                        <button id="editProfileBtn" class="btn btn-outline-primary btn-sm" onclick="toggleEditProfile()">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                        </button>
+                    </div>
+                    
+                    <form id="profileForm">
+                        <div class="row g-3">
+                            <div class="col-md-12 text-center mb-3">
+                                <div style="position: relative; display: inline-block;">
+                                    <img id="profileImageDisplay" src="" alt="Profile" class="rounded-circle border border-3 border-white shadow-sm" style="width: 120px; height: 120px; object-fit: cover; background-color: #007bb6; display: none;">
+                                    <div id="profileIconFallback" class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px; font-size: 3rem;"><i class="fa-solid fa-user"></i></div>
+                                    <label for="profileImageInput" id="profileImageLabel" class="btn btn-sm btn-dark rounded-circle position-absolute bottom-0 end-0" style="display: none; width: 35px; height: 35px; padding: 6px; cursor: pointer;"><i class="fa-solid fa-camera"></i></label>
+                                    <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+                                </div>
+                                <div class="mt-2 fw-bold" id="profileUsernameDisplay">@username</div>
+                            </div>
+
+                            <div class="col-md-6"><label class="form-label">Full Name</label><input type="text" id="profileFullName" class="form-control" disabled></div>
+                            <div class="col-md-6"><label class="form-label">Phone Number</label><input type="tel" id="profilePhone" class="form-control" disabled></div>
+                            <div class="col-md-12"><label class="form-label">Email Address</label><input type="email" id="profileEmail" class="form-control" disabled></div>
+                        </div>
+                        
+                        <div id="profileActionBtns" class="mt-4 text-end" style="display: none;">
+                            <button type="button" class="btn btn-secondary me-2" onclick="cancelEditProfile()">Cancel</button>
+                            <button type="button" class="btn btn-success" onclick="saveProfile()">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="helpSection" class="content-section">
+                <div class="widget">
+                    <h3>❓ Help & Support</h3>
+                    <div class="p-3">
+                        <p class="fs-5 mb-1">Reach us at: <strong class="text-primary">9573606418</strong></p>
+                        <p class="fs-5">Mail us at: <strong><a href="mailto:qucksereadmin@gmail.com" class="text-decoration-none">qucksereadmin@gmail.com</a></strong></p>
+                        <hr>
+                        <h4 class="mb-3">📍 Our Branches</h4>
+                        <div class="row g-3">
+                            <div class="col-md-6"><div class="card h-100 border-0 bg-light"><div class="card-body"><h5 class="card-title text-primary">Hyderabad (HQ)</h5><p class="card-text">123, IT Park, Hitech City<br>Hyderabad, Telangana</p></div></div></div>
+                            <div class="col-md-6"><div class="card h-100 border-0 bg-light"><div class="card-body"><h5 class="card-title text-primary">Bangalore</h5><p class="card-text">45, Tech Street, Koramangala<br>Bangalore, Karnataka</p></div></div></div>
+                            <div class="col-md-6"><div class="card h-100 border-0 bg-light"><div class="card-body"><h5 class="card-title text-primary">Mumbai</h5><p class="card-text">78, Business Bay, Andheri East<br>Mumbai, Maharashtra</p></div></div></div>
+                            <div class="col-md-6"><div class="card h-100 border-0 bg-light"><div class="card-body"><h5 class="card-title text-primary">Delhi</h5><p class="card-text">12, Connaught Place<br>New Delhi, Delhi</p></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="chatWindow" class="card shadow" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 320px; height: 400px; z-index: 1050;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <span id="chatHeaderTitle">Chat</span>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="toggleChat()"></button>
+    </div>
+    <div class="card-body d-flex flex-column" style="height: 300px;">
+        <div id="chatMessages" class="flex-grow-1 overflow-auto mb-3" style="border: 1px solid #eee; padding: 10px; border-radius: 5px; background-color: #f8f9fa;">
+            <div class="text-center text-muted small mt-5">Select an active booking to start chatting.</div>
+        </div>
+        <div class="input-group">
+            <input type="text" id="chatInput" class="form-control" placeholder="Type a message..." disabled>
+            <button class="btn btn-primary" type="button" id="chatSendBtn" disabled onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Rate Your Service</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reviewForm">
+                    <input type="hidden" id="reviewBookingId">
+                    <div class="mb-3">
+                        <label class="form-label">Rating:</label>
+                        <select class="form-select" id="reviewRating">
+                            <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+                            <option value="4">⭐⭐⭐⭐ Good</option>
+                            <option value="3">⭐⭐⭐ Average</option>
+                            <option value="2">⭐⭐ Poor</option>
+                            <option value="1">⭐ Terrible</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment:</label>
+                        <textarea class="form-control" id="reviewComment" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitReview()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

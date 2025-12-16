@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="admin_dashboard_script.js" defer></script>
+</head>
+<body>
+
+<div class="d-flex-wrapper" id="wrapper">
+
+    <div id="sidebar-wrapper">
+        <div class="sidebar-profile">
+            <div class="profile-pic-circle">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <h5 class="mb-0">Administrator</h5>
+            <small style="opacity: 0.7;">System Manager</small>
+        </div>
+        
+        <div class="list-group list-group-flush my-3">
+            <a href="#" class="list-group-item list-group-item-action active" onclick="switchView('overviewSection', this)">
+                <i class="fa-solid fa-chart-line me-2"></i> Overview
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('approvalsSection', this)">
+                <i class="fa-solid fa-user-check me-2"></i> Approvals
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('servicesSection', this)">
+                <i class="fa-solid fa-tags me-2"></i> Services & Pricing
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('usersSection', this)">
+                <i class="fa-solid fa-users me-2"></i> User Directory
+            </a>
+            <a href="#" class="list-group-item list-group-item-action" onclick="switchView('bookingsSection', this)">
+                <i class="fa-solid fa-calendar-days me-2"></i> Bookings Directory
+            </a>
+            
+            <a href="index.html" class="list-group-item list-group-item-action mt-5">
+                <i class="fa-solid fa-right-from-bracket me-2"></i> Log Out
+            </a>
+        </div>
+    </div>
+
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-light bg-transparent d-md-none mb-3">
+            <button class="btn btn-primary" id="menu-toggle">☰ Menu</button>
+        </nav>
+
+        <div class="container-fluid">
+            <h2 class="mb-4 text-primary fw-bold">Admin Command Center</h2>
+
+            <div id="overviewSection" class="content-section active-section">
+                <div class="widget">
+                    <h3 class="border-bottom pb-2 mb-3">📊 System Statistics</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white h-100">
+                                <div class="card-body text-center">
+                                    <h1 id="totalUsersCount" class="display-4 fw-bold">...</h1>
+                                    <p>Total Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white h-100">
+                                <div class="card-body text-center">
+                                    <h1 id="activeProvidersCount" class="display-4 fw-bold">...</h1>
+                                    <p>Active Providers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white h-100">
+                                <div class="card-body text-center">
+                                    <h1 id="recentBookingsCount" class="display-4 fw-bold">...</h1>
+                                    <p>Bookings (7 Days)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="approvalsSection" class="content-section">
+                <div class="widget">
+                    <h3 class="border-bottom pb-2 mb-3">🔔 Provider Requests</h3>
+                    <ul id="pendingProviderList" class="list-group list-group-flush">
+                        <p id="noPendingRequestsMsg" class="fst-italic text-muted">No pending registration requests.</p>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="servicesSection" class="content-section">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="widget h-100">
+                            <h4>Add New Service</h4>
+                            <form id="newServiceForm" class="mt-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Service Name:</label>
+                                    <input type="text" id="serviceName" required class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Price (₹):</label>
+                                    <input type="number" id="servicePrice" step="0.01" required class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Description:</label>
+                                    <input type="text" id="serviceDescription" class="form-control">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Add Service</button>
+                                <p id="serviceFormMessage" class="mt-2 text-center"></p>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="widget h-100">
+                            <h4>Existing Services</h4>
+                            <ul id="existingServicesList" class="list-group mt-3" style="max-height: 500px; overflow-y: auto;">
+                                <p id="noServicesMsg" class="fst-italic text-muted">Loading services...</p>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="usersSection" class="content-section">
+                <div class="widget">
+                    <h3 class="border-bottom pb-2 mb-3">👥 All Users</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allUsersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bookingsSection" class="content-section">
+                <div class="widget">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h3 class="mb-0">📅 Bookings Directory</h3>
+                        <div class="input-group" style="width: 300px;">
+                            <input type="text" id="bookingSearchInput" class="form-control" placeholder="Search Booking ID...">
+                            <button class="btn btn-primary" type="button" id="bookingSearchBtn">Search</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Service</th>
+                                    <th>Customer (ID)</th>
+                                    <th>Provider (ID)</th>
+                                    <th>Date/Time</th>
+                                    <th>Status</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allBookingsTableBody">
+                                <tr id="bookingsLoadingRow"><td colspan="7" class="text-center">Loading bookings...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
